@@ -3,6 +3,12 @@
 ## Purpose
 Execercies in go
 
+Howto run
+- create database bank
+- create tables using [sql/initialize.sql](sql/initialize.sql)
+- export DATABASE_URL=postgres://testuser:12345@localhost:5432/bank
+- go run main.go
+  
 ## BOM
 
 ![Bank model](Bank.png)
@@ -24,6 +30,16 @@ To create a postgres database
 
 ```sql
 create database bank
+
+---
+--- 
+---
+USE bank
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO testuser;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO testuser;
+
+
 ```
 create tables using [sql/initialize.sql](sql/initialize.sql) script
 

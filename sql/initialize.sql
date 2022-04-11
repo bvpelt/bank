@@ -1,19 +1,19 @@
 create table target (
-    id bigint not null,
+    id bigserial,
     name text not null,
     description text,
     primary key (id)
 );
 
 create table account (
-    id bigint not null,
+    id bigserial,
     number text not null,
     description text,
     primary key (id)
 );
 
 create table transaction (
-    id bigint not null,
+    id bigserial,
     from_account bigint not null,
     to_account bigint not null,
     target bigint not null,
