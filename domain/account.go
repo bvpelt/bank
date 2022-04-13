@@ -16,6 +16,35 @@ type Account struct {
 
 type IAccount interface {
 	Write(dbpool *pgxpool.Pool) (int64, error)
+	GetNumber() string
+	GetDescription() string
+	SetId(id int64)
+	SetNumber(number string)
+	SetDescription(description string)
+}
+
+func (account *Account) GetNumber() string {
+	return account.Number
+
+}
+func (account *Account) GetDescription() string {
+	return account.Description
+}
+
+func (account *Account) SetId(id int64) {
+	account.Id = id
+}
+func (account *Account) SetNumber(number string) {
+	account.Number = number
+}
+
+func (account *Account) SetDescription(description string) {
+	account.Description = description
+}
+
+func (account *Account) SetNumberDescription(number string, description string) {
+	account.Number = number
+	account.Description = description
 }
 
 func (account *Account) Write(dbpool *pgxpool.Pool) (int64, error) {

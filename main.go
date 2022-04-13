@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/bank/domain"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -78,14 +79,19 @@ func addAccounts() {
 		Description: "none",
 	}
 
-	//id, err := domain.AddAccount(dbpool, &account)
-	id, err := account.Write(dbpool)
-	fmt.Printf("%v %T\n", account, account)
+	for i := 0; i < 20; i++ {
+		//id, err := domain.AddAccount(dbpool, &account)
+		str := strconv.Itoa(i)
+		account.SetId(0)
+		account.SetNumber(str)
+		id, err := account.Write(dbpool)
+		fmt.Printf("%v %T\n", account, account)
 
-	if err != nil {
-		log.Error("addAccounts: Error during insert account")
-	} else {
-		log.WithFields(log.Fields{"id": id}).Info("Added account")
+		if err != nil {
+			log.Error("addAccounts: Error during insert account")
+		} else {
+			log.WithFields(log.Fields{"id": id}).Info("Added account")
+		}
 	}
 }
 
