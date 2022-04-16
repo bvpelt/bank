@@ -9,6 +9,13 @@ Howto run
 - export DATABASE_URL=postgres://testuser:12345@localhost:5432/bank
 - go run main.go
   
+## Runtime
+In order to run the go code execute the following commands
+```bash
+$ export DATABASE_URL=postgres://testuser:12345@localhost:5432/bank  # Define database source see [Create database]
+$ go run .                                                           # Source is in multiple files
+```
+
 ## BOM
 
 ![Bank model](Bank.png)

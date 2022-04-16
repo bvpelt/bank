@@ -2,40 +2,24 @@ package main
 
 import (
 	"context"
-
 	"fmt"
 	"os"
+	"strconv"
 
-	//	"github.com/jackc/pgconn"
-	//	"github.com/jackc/pgx"
-
+	"github.com/bank/domain"
 	"github.com/jackc/pgx/v4/pgxpool"
-
 	log "github.com/sirupsen/logrus"
 )
 
-type Account struct {
-	id          int64
-	number      string
-	description string
-}
-
-type Target struct {
-	id          int64
-	name        string
-	description string
-}
-
 type Transaction struct {
-	id           int64
-	from_account int64
-	to_account   int64
-	target       int64
-	amount       int64
-	description  string
+	Id           int64
+	From_account int64
+	To_account   int64
+	Target       int64
+	Amount       int64
+	Description  string
 }
 
-//var conn *pgx.Conn
 var dbpool *pgxpool.Pool
 
 func init() {
@@ -90,53 +74,35 @@ func CheckError(err error) {
 
 func addAccounts() {
 	log.Info("Add accounts")
-	account := Account{
-		number:      "1234567890",
-		description: "none",
+	account := domain.Account{
+		Number:      "1234567890",
+		Description: "none",
 	}
 
-	id, err := addAccount(&account)
-	fmt.Printf("%v %T\n", account, account)
+	for i := 0; i < 20; i++ {
+		//id, err := domain.AddAccount(dbpool, &account)
+		str := strconv.Itoa(i)
+		account.SetId(0)
+		account.SetNumber(str)
+		id, err := account.Write(dbpool)
+		fmt.Printf("%v %T\n", account, account)
 
-	if err != nil {
-		log.Error("addAccounts: Error during insert account")
-	} else {
-		log.WithFields(log.Fields{"id": id}).Info("Added account")
+		if err != nil {
+			log.Error("addAccounts: Error during insert account")
+		} else {
+			log.WithFields(log.Fields{"id": id}).Info("Added account")
+		}
 	}
-}
-
-func addAccount(account *Account) (int64, error) {
-
-	log.WithFields(log.Fields{"id": account.id, "number": account.number, "description": account.description}).Info("addAccount: Start addAccount")
-
-	var err error
-	var lastInsertedId int64 = 0
-
-	if account.id != 0 {
-		_, err = dbpool.Exec(context.Background(), "INSERT INTO account (id, number, description) VALUES ($1, $2, $3)", account.id, account.number, account.description)
-		lastInsertedId = account.id
-	} else {
-		err = dbpool.QueryRow(context.Background(), "INSERT INTO account (number, description) VALUES ($1, $2) RETURNING id", account.number, account.description).Scan(&lastInsertedId)
-		account.id = lastInsertedId
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "account": account}).Error("addAccount: Error during insert account")
-		return 0, fmt.Errorf("addAccount insert: %v", err)
-	} else {
-		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addAccount: insert account")
-	}
-
-	return lastInsertedId, nil
 }
 
 func addTargets() {
 	log.Info("Add targets")
-	target := Target{
-		name:        "Car",
-		description: "none",
+	target := domain.Target{
+		Name:        "Car",
+		Description: "none",
 	}
 
-	id, err := addTarget(&target)
+	id, err := target.Write(dbpool)
 	fmt.Printf("%v %T\n", target, target)
 
 	if err != nil {
@@ -145,31 +111,6 @@ func addTargets() {
 		log.WithFields(log.Fields{"id": id}).Info("Added target")
 	}
 
-}
-
-func addTarget(target *Target) (int64, error) {
-	log.Info("Add targets")
-
-	log.WithFields(log.Fields{"id": target.id, "name": target.name, "description": target.description}).Info("addTarget: Start addTarget")
-
-	var err error
-	var lastInsertedId int64 = 0
-
-	if target.id != 0 {
-		_, err = dbpool.Exec(context.Background(), "INSERT INTO target (id, name, description) VALUES ($1, $2, $3)", target.id, target.name, target.description)
-		lastInsertedId = target.id
-	} else {
-		err = dbpool.QueryRow(context.Background(), "INSERT INTO target (name, description) VALUES ($1, $2) RETURNING id", target.name, target.description).Scan(&lastInsertedId)
-		target.id = lastInsertedId
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "target": target}).Error("addTarget: Error during insert target")
-		return 0, fmt.Errorf("addTarget insert: %v", err)
-	} else {
-		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addTarget: insert target")
-	}
-
-	return lastInsertedId, nil
 }
 
 func addTransactions() {
