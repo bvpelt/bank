@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 
@@ -10,15 +11,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 )
-
-type Transaction struct {
-	Id           int64
-	From_account int64
-	To_account   int64
-	Target       int64
-	Amount       int64
-	Description  string
-}
 
 var dbpool *pgxpool.Pool
 
@@ -44,6 +36,8 @@ func main() {
 	// export DATABASE_URL=postgres://testuser:12345@localhost:5432/bank
 
 	var err error
+	var accounts []domain.Account
+
 	dbpool, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	log.WithFields(log.Fields{"pool": dbpool}).
 		Info("Open database")
@@ -60,9 +54,13 @@ func main() {
 
 	log.Info("Connected to database!")
 
-	addAccounts()
-	addTargets()
-	addTransactions()
+	const maxnumber = 20
+
+	addAccounts(maxnumber)
+	accounts = readAccounts(maxnumber)
+
+	addTargets(maxnumber)
+	addTransactions(maxnumber, accounts)
 	log.Info("Closed  Bank")
 }
 
@@ -72,15 +70,13 @@ func CheckError(err error) {
 	}
 }
 
-func addAccounts() {
+func addAccounts(maxnumber int) {
 	log.Info("Add accounts")
-	account := domain.Account{
-		Number:      "1234567890",
-		Description: "none",
-	}
+	account := domain.Account{}
 
-	for i := 0; i < 20; i++ {
-		//id, err := domain.AddAccount(dbpool, &account)
+	account.SetNumber("1234567890")
+	account.SetDescription("none")
+	for i := 0; i < maxnumber; i++ {
 		str := strconv.Itoa(i)
 		account.SetId(0)
 		account.SetNumber(str)
@@ -95,24 +91,65 @@ func addAccounts() {
 	}
 }
 
-func addTargets() {
-	log.Info("Add targets")
-	target := domain.Target{
-		Name:        "Car",
-		Description: "none",
+func readAccounts(maxnumber int) []domain.Account {
+	var accounts []domain.Account
+	var account domain.Account
+
+	accounts, err := account.Read(dbpool, maxnumber)
+
+	if err == nil {
+		for _, account = range accounts {
+			fmt.Println("Found account: %v\n", account)
+		}
 	}
 
-	id, err := target.Write(dbpool)
-	fmt.Printf("%v %T\n", target, target)
-
-	if err != nil {
-		log.Error("addTargets: Error during insert target")
-	} else {
-		log.WithFields(log.Fields{"id": id}).Info("Added target")
-	}
-
+	return accounts
 }
 
-func addTransactions() {
+func addTargets(maxnumber int) {
+	log.Info("Add targets")
+	target := domain.Target{}
+	target.SetName("Car")
+	target.SetDescription("none")
+
+	for i := 0; i < maxnumber; i++ {
+		str := "name: " + strconv.Itoa(i)
+		target.SetId(0)
+		target.SetName(str)
+
+		id, err := target.Write(dbpool)
+		fmt.Printf("%v %T\n", target, target)
+
+		if err != nil {
+			log.Error("addTargets: Error during insert target")
+		} else {
+			log.WithFields(log.Fields{"id": id}).Info("Added target")
+		}
+	}
+}
+
+func addTransactions(maxnumber int, accounts []domain.Account) {
 	log.Info("Add transactions")
+
+	transaction := domain.Transaction{}
+	transaction.SetTarget(1)
+
+	var i int
+	for i = 0; i < maxnumber; i++ {
+		str := "transaction: " + strconv.Itoa(i)
+		transaction.SetId(0)
+		transaction.SetDescription(str)
+		transaction.SetFromAccount(accounts[i].GetId())
+		transaction.SetToAccount(accounts[maxnumber-(i+1)].GetId())
+		transaction.SetAmount(int64(rand.Intn(25000)))
+
+		id, err := transaction.Write(dbpool)
+		fmt.Printf("%v %T\n", transaction, transaction)
+
+		if err != nil {
+			log.Error("addTransactions: Error during insert transaction")
+		} else {
+			log.WithFields(log.Fields{"id": id}).Info("Added transaction")
+		}
+	}
 }

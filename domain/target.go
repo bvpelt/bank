@@ -9,29 +9,53 @@ import (
 )
 
 type Target struct {
-	Id          int64
-	Name        string
-	Description string
+	id          int64
+	name        string
+	description string
 }
 
 type ITarget interface {
 	Write(dbpool *pgxpool.Pool) (int64, error)
 }
 
+func (target *Target) GetName() string {
+	return target.name
+
+}
+func (target *Target) GetDescription() string {
+	return target.description
+}
+
+func (target *Target) SetId(id int64) {
+	target.id = id
+}
+func (target *Target) SetName(name string) {
+	target.name = name
+}
+
+func (target *Target) SetDescription(description string) {
+	target.description = description
+}
+
+func (target *Target) SetNameDescription(name string, description string) {
+	target.name = name
+	target.description = description
+}
+
 func (target *Target) Write(dbpool *pgxpool.Pool) (int64, error) {
 	log.Info("Add targets")
 
-	log.WithFields(log.Fields{"id": target.Id, "name": target.Name, "description": target.Description}).Info("addTarget: Start addTarget")
+	log.WithFields(log.Fields{"id": target.id, "name": target.name, "description": target.description}).Info("addTarget: Start addTarget")
 
 	var err error
 	var lastInsertedId int64 = 0
 
-	if target.Id != 0 {
-		_, err = dbpool.Exec(context.Background(), "INSERT INTO target (id, name, description) VALUES ($1, $2, $3)", target.Id, target.Name, target.Description)
-		lastInsertedId = target.Id
+	if target.id != 0 {
+		_, err = dbpool.Exec(context.Background(), "INSERT INTO target (id, name, description) VALUES ($1, $2, $3)", target.id, target.name, target.description)
+		lastInsertedId = target.id
 	} else {
-		err = dbpool.QueryRow(context.Background(), "INSERT INTO target (name, description) VALUES ($1, $2) RETURNING id", target.Name, target.Description).Scan(&lastInsertedId)
-		target.Id = lastInsertedId
+		err = dbpool.QueryRow(context.Background(), "INSERT INTO target (name, description) VALUES ($1, $2) RETURNING id", target.name, target.description).Scan(&lastInsertedId)
+		target.id = lastInsertedId
 	}
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "target": target}).Error("addTarget: Error during insert target")
