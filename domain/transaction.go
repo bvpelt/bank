@@ -76,14 +76,17 @@ func (transaction *Transaction) SetToAccount(to_account int64) {
 	transaction.to_account = to_account
 
 }
+
 func (transaction *Transaction) SetTarget(target int64) {
 	transaction.target = target
 
 }
+
 func (transaction *Transaction) SetAmount(amount int64) {
 	transaction.amount = amount
 
 }
+
 func (transaction *Transaction) SetDescription(description string) {
 	transaction.description = description
 
@@ -114,6 +117,7 @@ func (transaction *Transaction) Write(dbpool *pgxpool.Pool) (int64, error) {
 			transaction.from_account, transaction.to_account, transaction.target, transaction.amount, transaction.description).Scan(&lastInsertedId)
 		transaction.id = lastInsertedId
 	}
+
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "transaction": transaction}).Error("addTransaction: Error during insert target")
 		return 0, fmt.Errorf("addTarget insert: %v", err)
@@ -121,5 +125,5 @@ func (transaction *Transaction) Write(dbpool *pgxpool.Pool) (int64, error) {
 		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addTransaction: insert target")
 	}
 
-	return lastInsertedId, nil
+	return lastInsertedId, err
 }

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"sync"
 
 	"github.com/bank/domain"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 )
 
-func AddAccounts(dbpool *pgxpool.Pool, maxnumber int) {
+func AddAccounts(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
 	log.Info("Add accounts")
 	account := domain.Account{}
 
@@ -29,6 +30,7 @@ func AddAccounts(dbpool *pgxpool.Pool, maxnumber int) {
 			log.WithFields(log.Fields{"id": id}).Info("Added account")
 		}
 	}
+	wg.Done()
 }
 
 func ReadAccounts(dbpool *pgxpool.Pool, maxnumber int) []domain.Account {
@@ -39,14 +41,14 @@ func ReadAccounts(dbpool *pgxpool.Pool, maxnumber int) []domain.Account {
 
 	if err == nil {
 		for _, account = range accounts {
-			fmt.Println("Found account: %v\n", account)
+			log.WithFields(log.Fields{"id": account.GetId(), "number": account.GetNumber(), "description": account.GetDescription()}).Info("found account")
 		}
 	}
 
 	return accounts
 }
 
-func AddTargets(dbpool *pgxpool.Pool, maxnumber int) {
+func AddTargets(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
 	log.Info("Add targets")
 	target := domain.Target{}
 	target.SetName("Car")
@@ -61,11 +63,12 @@ func AddTargets(dbpool *pgxpool.Pool, maxnumber int) {
 		fmt.Printf("%v %T\n", target, target)
 
 		if err != nil {
-			log.Error("addTargets: Error during insert target")
+			log.WithFields(log.Fields{"error": err}).Error("addTargets: Error during insert target")
 		} else {
 			log.WithFields(log.Fields{"id": id}).Info("Added target")
 		}
 	}
+	wg.Done()
 }
 
 func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Account) {

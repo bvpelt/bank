@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"sync"
 
 	"github.com/bank/domain"
 	"github.com/bank/test"
@@ -12,6 +13,7 @@ import (
 )
 
 var dbpool *pgxpool.Pool
+var wg = &sync.WaitGroup{}
 
 func init() {
 	// Log as JSON instead of the default ASCII formatter.
@@ -55,10 +57,13 @@ func main() {
 
 	const maxnumber = 20
 
-	test.AddAccounts(dbpool, maxnumber)
+	wg.Add(2)
+	go test.AddAccounts(dbpool, maxnumber, wg)
+	go test.AddTargets(dbpool, maxnumber, wg)
+	wg.Wait()
+
 	accounts = test.ReadAccounts(dbpool, maxnumber)
 
-	test.AddTargets(dbpool, maxnumber)
 	test.AddTransactions(dbpool, maxnumber, accounts)
 	log.Info("Closed  Bank")
 }

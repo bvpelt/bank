@@ -85,7 +85,7 @@ func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error)
 	log.WithFields(log.Fields{"limit": limit}).Info("Read account")
 
 	rows, err := dbpool.Query(context.Background(), "SELECT * from account limit $1", limit)
-	log.WithFields(log.Fields{"error": err}).Info("Read account - after query")
+	//log.WithFields(log.Fields{"error": err}).Info("Read account - after query")
 
 	if err == nil {
 		var index = 0
@@ -95,9 +95,8 @@ func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error)
 
 			account := Account{}
 			err := rows.Scan(&account.id, &account.number, &account.description)
-			log.WithFields(log.Fields{"error": err}).Info("Read account - reading result after scan error")
+			//log.WithFields(log.Fields{"error": err}).Info("Read account - reading result after scan error")
 			if err == nil {
-
 				accounts = append(accounts, account)
 				index++
 			} else {
