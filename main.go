@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"os"
-	"sync"
 
-	"github.com/bank/domain"
 	"github.com/bank/test"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -13,7 +11,6 @@ import (
 )
 
 var dbpool *pgxpool.Pool
-var wg = &sync.WaitGroup{}
 
 func init() {
 	// Log as JSON instead of the default ASCII formatter.
@@ -37,7 +34,7 @@ func main() {
 	// export DATABASE_URL=postgres://testuser:12345@localhost:5432/bank
 
 	var err error
-	var accounts []domain.Account
+	//var accounts []domain.Account
 
 	dbpool, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	log.WithFields(log.Fields{"pool": dbpool}).
@@ -55,16 +52,21 @@ func main() {
 
 	log.Info("Connected to database!")
 
-	const maxnumber = 20
+	/*
+		const maxnumber = 20
 
-	wg.Add(2)
-	go test.AddAccounts(dbpool, maxnumber, wg)
-	go test.AddTargets(dbpool, maxnumber, wg)
-	wg.Wait()
+		wg.Add(2)
+		go test.AddAccounts(dbpool, maxnumber, wg)
+		go test.AddTargets(dbpool, maxnumber, wg)
+		wg.Wait()
 
-	accounts = test.ReadAccounts(dbpool, maxnumber)
+		accounts = test.ReadAccounts(dbpool, maxnumber)
 
-	test.AddTransactions(dbpool, maxnumber, accounts)
+		test.AddTransactions(dbpool, maxnumber, accounts)
+	*/
+
+	test.DoTransactionTest(dbpool)
+
 	log.Info("Closed  Bank")
 }
 

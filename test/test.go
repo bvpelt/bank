@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -10,6 +9,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 )
+
+var wg = &sync.WaitGroup{}
 
 func AddAccounts(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
 	log.Info("Add accounts")
@@ -22,7 +23,7 @@ func AddAccounts(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
 		account.SetId(0)
 		account.SetNumber(str)
 		id, err := account.Write(dbpool)
-		fmt.Printf("%v %T\n", account, account)
+		//fmt.Printf("%v %T\n", account, account)
 
 		if err != nil {
 			log.Error("addAccounts: Error during insert account")
@@ -60,7 +61,7 @@ func AddTargets(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
 		target.SetName(str)
 
 		id, err := target.Write(dbpool)
-		fmt.Printf("%v %T\n", target, target)
+		//fmt.Printf("%v %T\n", target, target)
 
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Error("addTargets: Error during insert target")
@@ -71,7 +72,22 @@ func AddTargets(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Account) {
+func ReadTargets(dbpool *pgxpool.Pool, maxnumber int) []domain.Target {
+	var targets []domain.Target
+	var target domain.Target
+
+	targets, err := target.Read(dbpool, maxnumber)
+
+	if err == nil {
+		for _, target = range targets {
+			log.WithFields(log.Fields{"id": target.GetId(), "name": target.GetName(), "description": target.GetDescription()}).Info("found target")
+		}
+	}
+
+	return targets
+}
+
+func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Account, targets []domain.Target) {
 	log.Info("Add transactions")
 
 	transaction := domain.Transaction{}
@@ -85,9 +101,10 @@ func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Acco
 		transaction.SetFromAccount(accounts[i].GetId())
 		transaction.SetToAccount(accounts[maxnumber-(i+1)].GetId())
 		transaction.SetAmount(int64(rand.Intn(25000)))
+		transaction.SetTarget(targets[i].GetId())
 
-		id, err := transaction.Write(dbpool)
-		fmt.Printf("%v %T\n", transaction, transaction)
+		id, err := transaction.AddTransaction(dbpool)
+		//fmt.Printf("%v %T\n", transaction, transaction)
 
 		if err != nil {
 			log.Error("addTransactions: Error during insert transaction")
@@ -95,4 +112,21 @@ func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Acco
 			log.WithFields(log.Fields{"id": id}).Info("Added transaction")
 		}
 	}
+}
+
+func DoTransactionTest(dbpool *pgxpool.Pool) {
+	const maxnumber = 20
+	var accounts []domain.Account
+	var targets []domain.Target
+
+	wg.Add(2)
+	go AddAccounts(dbpool, maxnumber, wg)
+	go AddTargets(dbpool, maxnumber, wg)
+	wg.Wait()
+
+	accounts = ReadAccounts(dbpool, maxnumber)
+	targets = ReadTargets(dbpool, maxnumber)
+	//fmt.Printf("Targets: %v\n", targets)
+
+	AddTransactions(dbpool, maxnumber, accounts, targets)
 }

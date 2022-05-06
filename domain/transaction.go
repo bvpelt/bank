@@ -18,7 +18,7 @@ type Transaction struct {
 }
 
 type ITransaction interface {
-	Write(dbpool *pgxpool.Pool) (int64, error)
+	//	Write(dbpool *pgxpool.Pool) (int64, error)
 	GetId() int64
 	GetFromAccount() int64
 	GetToAccount() int64
@@ -30,6 +30,7 @@ type ITransaction interface {
 	SetTarget(target int64)
 	SetAmount(amount int64)
 	SetDescription(description string)
+	AddTransaction(dbpool *pgxpool.Pool) (int64, error)
 }
 
 func (transaction *Transaction) GetId() int64 {
@@ -92,8 +93,9 @@ func (transaction *Transaction) SetDescription(description string) {
 
 }
 
-func (transaction *Transaction) Write(dbpool *pgxpool.Pool) (int64, error) {
-	log.Info("Add targets")
+//func (transaction *Transaction) write(dbpool *pgxpool.Pool) (int64, error) {
+func write(dbpool *pgxpool.Pool, transaction *Transaction) (int64, error) {
+	log.Info("Write transaction")
 
 	log.WithFields(log.Fields{"id": transaction.id,
 		"from_account": transaction.from_account,
@@ -101,7 +103,7 @@ func (transaction *Transaction) Write(dbpool *pgxpool.Pool) (int64, error) {
 		"target id":    transaction.target,
 		"amount":       transaction.amount,
 		"description":  transaction.description,
-	}).Info("addTarget: Start addTarget")
+	}).Info("addTransaction: Start addTransaction")
 
 	var err error
 	var lastInsertedId int64 = 0
@@ -120,10 +122,22 @@ func (transaction *Transaction) Write(dbpool *pgxpool.Pool) (int64, error) {
 
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "transaction": transaction}).Error("addTransaction: Error during insert target")
-		return 0, fmt.Errorf("addTarget insert: %v", err)
+		return 0, fmt.Errorf("addTaaddTransactionrget insert: %v", err)
 	} else {
 		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addTransaction: insert target")
 	}
 
 	return lastInsertedId, err
+}
+
+func (transaction *Transaction) AddTransaction(dbpool *pgxpool.Pool) (int64, error) {
+	log.Info("Add transaction")
+
+	id, err := write(dbpool, transaction)
+
+	if err != nil {
+		return 0, err
+	} else {
+		return id, nil
+	}
 }

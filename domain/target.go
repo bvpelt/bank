@@ -16,12 +16,25 @@ type Target struct {
 
 type ITarget interface {
 	Write(dbpool *pgxpool.Pool) (int64, error)
+	Read(dbpool *pgxpool.Pool, limit int) ([]Target, error)
+	GetId() int64
+	GetName() string
+	GetDescription() string
+	SetId(id int64)
+	SetName(number string)
+	SetDescription(description string)
+}
+
+func (target *Target) GetId() int64 {
+	return target.id
+
 }
 
 func (target *Target) GetName() string {
 	return target.name
 
 }
+
 func (target *Target) GetDescription() string {
 	return target.description
 }
@@ -65,4 +78,38 @@ func (target *Target) Write(dbpool *pgxpool.Pool) (int64, error) {
 	}
 
 	return lastInsertedId, nil
+}
+
+func (target *Target) Read(dbpool *pgxpool.Pool, limit int) ([]Target, error) {
+	targets := []Target{}
+
+	log.WithFields(log.Fields{"limit": limit}).Info("Read target")
+
+	rows, err := dbpool.Query(context.Background(), "SELECT * from target limit $1", limit)
+	//log.WithFields(log.Fields{"error": err}).Info("Read account - after query")
+
+	if err == nil {
+		var index = 0
+
+		for rows.Next() {
+			log.WithFields(log.Fields{"index": index}).Info("Read target - reading result")
+
+			target := Target{}
+			err := rows.Scan(&target.id, &target.name, &target.description)
+			//log.WithFields(log.Fields{"error": err}).Info("Read account - reading result after scan error")
+			if err == nil {
+				targets = append(targets, target)
+				index++
+			} else {
+				log.WithFields(log.Fields{"error": err}).Info("Read target - reading result error")
+				return targets, err
+			}
+		}
+		return targets, nil
+
+	} else {
+		log.WithFields(log.Fields{"error": err}).Info("Read target - reading result error")
+		return targets, err
+	}
+
 }
