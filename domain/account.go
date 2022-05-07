@@ -57,7 +57,7 @@ func (account *Account) SetNumberDescription(number string, description string) 
 
 func (account *Account) Write(dbpool *pgxpool.Pool) (int64, error) {
 
-	log.WithFields(log.Fields{"id": account.id, "number": account.number, "description": account.description}).Info("Write account")
+	log.WithFields(log.Fields{"id": account.id, "number": account.number, "description": account.description}).Debug("Write account")
 
 	var err error
 	var lastInsertedId int64 = 0
@@ -73,7 +73,7 @@ func (account *Account) Write(dbpool *pgxpool.Pool) (int64, error) {
 		log.WithFields(log.Fields{"error": err, "account": account}).Error("addAccount: Error during insert account")
 		return 0, fmt.Errorf("addAccount insert: %v", err)
 	} else {
-		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addAccount: insert account")
+		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Debug("addAccount: insert account")
 	}
 
 	return lastInsertedId, nil
@@ -82,32 +82,32 @@ func (account *Account) Write(dbpool *pgxpool.Pool) (int64, error) {
 func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error) {
 	accounts := []Account{}
 
-	log.WithFields(log.Fields{"limit": limit}).Info("Read account")
+	log.WithFields(log.Fields{"limit": limit}).Debug("Read account")
 
 	rows, err := dbpool.Query(context.Background(), "SELECT * from account limit $1", limit)
-	//log.WithFields(log.Fields{"error": err}).Info("Read account - after query")
+	log.WithFields(log.Fields{"error": err}).Debug("Read account - after query")
 
 	if err == nil {
 		var index = 0
 
 		for rows.Next() {
-			log.WithFields(log.Fields{"index": index}).Info("Read account - reading result")
+			log.WithFields(log.Fields{"index": index}).Debug("Read account - reading result")
 
 			account := Account{}
 			err := rows.Scan(&account.id, &account.number, &account.description)
-			//log.WithFields(log.Fields{"error": err}).Info("Read account - reading result after scan error")
+			log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result after scan error")
 			if err == nil {
 				accounts = append(accounts, account)
 				index++
 			} else {
-				log.WithFields(log.Fields{"error": err}).Info("Read account - reading result error")
+				log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
 				return accounts, err
 			}
 		}
 		return accounts, nil
 
 	} else {
-		log.WithFields(log.Fields{"error": err}).Info("Read account - reading result error")
+		log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
 		return accounts, err
 	}
 

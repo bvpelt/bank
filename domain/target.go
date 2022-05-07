@@ -42,6 +42,7 @@ func (target *Target) GetDescription() string {
 func (target *Target) SetId(id int64) {
 	target.id = id
 }
+
 func (target *Target) SetName(name string) {
 	target.name = name
 }
@@ -56,9 +57,9 @@ func (target *Target) SetNameDescription(name string, description string) {
 }
 
 func (target *Target) Write(dbpool *pgxpool.Pool) (int64, error) {
-	log.Info("Add targets")
+	log.Debug("Write targets")
 
-	log.WithFields(log.Fields{"id": target.id, "name": target.name, "description": target.description}).Info("addTarget: Start addTarget")
+	log.WithFields(log.Fields{"id": target.id, "name": target.name, "description": target.description}).Debug("addTarget: Start addTarget")
 
 	var err error
 	var lastInsertedId int64 = 0
@@ -74,7 +75,7 @@ func (target *Target) Write(dbpool *pgxpool.Pool) (int64, error) {
 		log.WithFields(log.Fields{"error": err, "target": target}).Error("addTarget: Error during insert target")
 		return 0, fmt.Errorf("addTarget insert: %v", err)
 	} else {
-		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addTarget: insert target")
+		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Debug("addTarget: insert target")
 	}
 
 	return lastInsertedId, nil
@@ -83,33 +84,32 @@ func (target *Target) Write(dbpool *pgxpool.Pool) (int64, error) {
 func (target *Target) Read(dbpool *pgxpool.Pool, limit int) ([]Target, error) {
 	targets := []Target{}
 
-	log.WithFields(log.Fields{"limit": limit}).Info("Read target")
+	log.WithFields(log.Fields{"limit": limit}).Debug("Read target")
 
 	rows, err := dbpool.Query(context.Background(), "SELECT * from target limit $1", limit)
-	//log.WithFields(log.Fields{"error": err}).Info("Read account - after query")
+	log.WithFields(log.Fields{"error": err}).Debug("Read account - after query")
 
 	if err == nil {
 		var index = 0
 
 		for rows.Next() {
-			log.WithFields(log.Fields{"index": index}).Info("Read target - reading result")
+			log.WithFields(log.Fields{"index": index}).Debug("Read target - reading result")
 
 			target := Target{}
 			err := rows.Scan(&target.id, &target.name, &target.description)
-			//log.WithFields(log.Fields{"error": err}).Info("Read account - reading result after scan error")
+			log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result after scan error")
 			if err == nil {
 				targets = append(targets, target)
 				index++
 			} else {
-				log.WithFields(log.Fields{"error": err}).Info("Read target - reading result error")
+				log.WithFields(log.Fields{"error": err}).Debug("Read target - reading result error")
 				return targets, err
 			}
 		}
 		return targets, nil
 
 	} else {
-		log.WithFields(log.Fields{"error": err}).Info("Read target - reading result error")
+		log.WithFields(log.Fields{"error": err}).Debug("Read target - reading result error")
 		return targets, err
 	}
-
 }

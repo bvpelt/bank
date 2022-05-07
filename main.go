@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/bank/test"
 
@@ -13,12 +14,22 @@ import (
 var dbpool *pgxpool.Pool
 
 func init() {
+	//
+	// Logging levels are: Trace, Debug, Info, Warning, Error, Fatal and Panic see https://github.com/Sirupsen/logrus
 	// Log as JSON instead of the default ASCII formatter.
 	//log.SetFormatter(&log.JSONFormatter{})
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-	})
 
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:   true,
+		PadLevelText:    true,
+		TimestampFormat: time.RFC3339,
+	})
+	/*
+		customFormatter := new(logrus.TextFormatter)
+		log.SetFormatter(customFormatter)
+		customFormatter.TimestampFormat = "2016-03-28 15:04:05.000"
+		customFormatter.FullTimestamp = true
+	*/
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example
 	log.SetOutput(os.Stdout)
@@ -26,48 +37,33 @@ func init() {
 	// Only log the warning severity or above.
 	//log.SetLevel(log.WarnLevel)
 	log.SetLevel(log.DebugLevel)
-
 }
 
 func main() {
-	log.Info("Started Bank")
+	log.Debug("Started Bank")
 	// export DATABASE_URL=postgres://testuser:12345@localhost:5432/bank
 
 	var err error
-	//var accounts []domain.Account
 
 	dbpool, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	log.WithFields(log.Fields{"pool": dbpool}).
-		Info("Open database")
+		Debug("Open database")
 	CheckError(err)
 
 	err = dbpool.Ping(context.Background())
 	CheckError(err)
 
-	// close database
+	// always close database at program exit
 	defer func() {
-		log.Info("Close database")
+		log.Debug("Close database")
 		dbpool.Close()
 	}()
 
-	log.Info("Connected to database!")
-
-	/*
-		const maxnumber = 20
-
-		wg.Add(2)
-		go test.AddAccounts(dbpool, maxnumber, wg)
-		go test.AddTargets(dbpool, maxnumber, wg)
-		wg.Wait()
-
-		accounts = test.ReadAccounts(dbpool, maxnumber)
-
-		test.AddTransactions(dbpool, maxnumber, accounts)
-	*/
+	log.Debug("Connected to database!")
 
 	test.DoTransactionTest(dbpool)
 
-	log.Info("Closed  Bank")
+	log.Debug("Closed  Bank")
 }
 
 func CheckError(err error) {

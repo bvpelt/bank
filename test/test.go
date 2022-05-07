@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/bank/domain"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -13,22 +14,27 @@ import (
 var wg = &sync.WaitGroup{}
 
 func AddAccounts(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
-	log.Info("Add accounts")
+	log.Debug("Add accounts")
 	account := domain.Account{}
 
 	account.SetNumber("1234567890")
-	account.SetDescription("none")
+
 	for i := 0; i < maxnumber; i++ {
-		str := strconv.Itoa(i)
+		var str string
+		str = strconv.Itoa(i)
+
 		account.SetId(0)
 		account.SetNumber(str)
+		now := time.Now()
+		str = "account: " + now.Format(time.RFC3339Nano)
+		account.SetDescription(str)
+
 		id, err := account.Write(dbpool)
-		//fmt.Printf("%v %T\n", account, account)
 
 		if err != nil {
 			log.Error("addAccounts: Error during insert account")
 		} else {
-			log.WithFields(log.Fields{"id": id}).Info("Added account")
+			log.WithFields(log.Fields{"id": id}).Debug("Added account")
 		}
 	}
 	wg.Done()
@@ -42,7 +48,7 @@ func ReadAccounts(dbpool *pgxpool.Pool, maxnumber int) []domain.Account {
 
 	if err == nil {
 		for _, account = range accounts {
-			log.WithFields(log.Fields{"id": account.GetId(), "number": account.GetNumber(), "description": account.GetDescription()}).Info("found account")
+			log.WithFields(log.Fields{"id": account.GetId(), "number": account.GetNumber(), "description": account.GetDescription()}).Debug("found account")
 		}
 	}
 
@@ -50,23 +56,25 @@ func ReadAccounts(dbpool *pgxpool.Pool, maxnumber int) []domain.Account {
 }
 
 func AddTargets(dbpool *pgxpool.Pool, maxnumber int, wg *sync.WaitGroup) {
-	log.Info("Add targets")
+	log.Debug("Add targets")
 	target := domain.Target{}
-	target.SetName("Car")
-	target.SetDescription("none")
 
 	for i := 0; i < maxnumber; i++ {
-		str := "name: " + strconv.Itoa(i)
+		var str string
+		str = strconv.Itoa(i)
+
 		target.SetId(0)
-		target.SetName(str)
+		target.SetName("name: " + str)
+		now := time.Now()
+		str = "target: " + now.Format(time.RFC3339Nano)
+		target.SetDescription(str)
 
 		id, err := target.Write(dbpool)
-		//fmt.Printf("%v %T\n", target, target)
 
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Error("addTargets: Error during insert target")
 		} else {
-			log.WithFields(log.Fields{"id": id}).Info("Added target")
+			log.WithFields(log.Fields{"id": id}).Debug("Added target")
 		}
 	}
 	wg.Done()
@@ -80,7 +88,7 @@ func ReadTargets(dbpool *pgxpool.Pool, maxnumber int) []domain.Target {
 
 	if err == nil {
 		for _, target = range targets {
-			log.WithFields(log.Fields{"id": target.GetId(), "name": target.GetName(), "description": target.GetDescription()}).Info("found target")
+			log.WithFields(log.Fields{"id": target.GetId(), "name": target.GetName(), "description": target.GetDescription()}).Debug("found target")
 		}
 	}
 
@@ -88,14 +96,15 @@ func ReadTargets(dbpool *pgxpool.Pool, maxnumber int) []domain.Target {
 }
 
 func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Account, targets []domain.Target) {
-	log.Info("Add transactions")
+	log.Debug("Add transactions")
 
 	transaction := domain.Transaction{}
 	transaction.SetTarget(1)
 
 	var i int
 	for i = 0; i < maxnumber; i++ {
-		str := "transaction: " + strconv.Itoa(i)
+		now := time.Now()
+		str := "transaction: " + now.Format(time.RFC3339Nano)
 		transaction.SetId(0)
 		transaction.SetDescription(str)
 		transaction.SetFromAccount(accounts[i].GetId())
@@ -104,12 +113,11 @@ func AddTransactions(dbpool *pgxpool.Pool, maxnumber int, accounts []domain.Acco
 		transaction.SetTarget(targets[i].GetId())
 
 		id, err := transaction.AddTransaction(dbpool)
-		//fmt.Printf("%v %T\n", transaction, transaction)
 
 		if err != nil {
 			log.Error("addTransactions: Error during insert transaction")
 		} else {
-			log.WithFields(log.Fields{"id": id}).Info("Added transaction")
+			log.WithFields(log.Fields{"id": id}).Debug("Added transaction")
 		}
 	}
 }
@@ -126,7 +134,6 @@ func DoTransactionTest(dbpool *pgxpool.Pool) {
 
 	accounts = ReadAccounts(dbpool, maxnumber)
 	targets = ReadTargets(dbpool, maxnumber)
-	//fmt.Printf("Targets: %v\n", targets)
 
 	AddTransactions(dbpool, maxnumber, accounts, targets)
 }

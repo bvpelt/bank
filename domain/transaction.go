@@ -95,7 +95,7 @@ func (transaction *Transaction) SetDescription(description string) {
 
 //func (transaction *Transaction) write(dbpool *pgxpool.Pool) (int64, error) {
 func write(dbpool *pgxpool.Pool, transaction *Transaction) (int64, error) {
-	log.Info("Write transaction")
+	log.Debug("Write transaction")
 
 	log.WithFields(log.Fields{"id": transaction.id,
 		"from_account": transaction.from_account,
@@ -103,7 +103,7 @@ func write(dbpool *pgxpool.Pool, transaction *Transaction) (int64, error) {
 		"target id":    transaction.target,
 		"amount":       transaction.amount,
 		"description":  transaction.description,
-	}).Info("addTransaction: Start addTransaction")
+	}).Debug("addTransaction: Start addTransaction")
 
 	var err error
 	var lastInsertedId int64 = 0
@@ -124,14 +124,14 @@ func write(dbpool *pgxpool.Pool, transaction *Transaction) (int64, error) {
 		log.WithFields(log.Fields{"error": err, "transaction": transaction}).Error("addTransaction: Error during insert target")
 		return 0, fmt.Errorf("addTaaddTransactionrget insert: %v", err)
 	} else {
-		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Info("addTransaction: insert target")
+		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Debug("addTransaction: insert target")
 	}
 
 	return lastInsertedId, err
 }
 
 func (transaction *Transaction) AddTransaction(dbpool *pgxpool.Pool) (int64, error) {
-	log.Info("Add transaction")
+	log.Debug("Add transaction")
 
 	id, err := write(dbpool, transaction)
 
