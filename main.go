@@ -61,7 +61,8 @@ func main() {
 
 	log.Debug("Connected to database!")
 
-	test.DoTransactionTest(dbpool)
+	//test.DoTransactionTest(dbpool)
+	test.Server()
 
 	log.Debug("Closed  Bank")
 }

@@ -71,3 +71,4 @@ go mod tidy
 - [postgres driver] (https://github.com/jackc/pgx)
 - [postgres example](https://golangdocs.com/golang-postgresql-example)
 - [setup environment](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-ubuntu-18-04)
+- [example http rest api server](https://dzone.com/articles/how-to-write-a-http-rest-api-server-in-go-in-minut)

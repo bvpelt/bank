@@ -1,0 +1,53 @@
+openapi: 3.0.0
+info:
+  title: Simple API overview
+  version: 2.0.0
+servers:
+- url: http://localhost:8080
+  description: development environment
+paths:
+  /healthz:
+    get:
+      description: Returns health of the server
+      operationId: checkHealth
+      responses:
+        "200":
+          description: OK message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OKResponse'
+  /hello/{user}:
+    get:
+      description: Returns a greeting to the user!
+      operationId: helloUser
+      parameters:
+      - name: user
+        in: path
+        description: The name of the user to greet.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Returns the greeting.
+          content:
+            application/json:
+              schema:
+                type: string
+                x-content-type: application/json
+        "400":
+          description: Invalid characters in "user" were provided.
+          content:
+            application/json:
+              schema:
+                type: string
+                x-content-type: application/json
+components:
+  schemas:
+    OKResponse:
+      type: string
+      enum:
+      - OK
