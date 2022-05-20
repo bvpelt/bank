@@ -3,7 +3,7 @@ package test
 import (
 	"net/http"
 
-	sw "github.com/bvpelt/bank/swagger"
+	sw "github.com/bank/swagger"
 
 	log "github.com/sirupsen/logrus"
 )
