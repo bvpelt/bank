@@ -12,5 +12,5 @@ type OKResponse string
 
 // List of OKResponse
 const (
-	OK OkResponse = "OK"
+	OK OKResponse = "OK"
 )

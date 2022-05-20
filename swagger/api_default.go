@@ -9,15 +9,34 @@
 package swagger
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 )
 
 func CheckHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("ok")
 }
 
 func HelloUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+
+	type User struct {
+		Name string `json:"name"`
+	}
+
+	var user User
+
+	keys := r.URL.Query()
+	if len(keys) < 1 {
+		log.Println("Url parameter missing")
+		return
+	} else {
+		user.Name = keys["user"][0]
+		json.NewEncoder(w).Encode(user)
+	}
+
 }
