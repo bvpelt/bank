@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func CheckHealth(w http.ResponseWriter, r *http.Request) {
@@ -28,15 +29,16 @@ func HelloUser(w http.ResponseWriter, r *http.Request) {
 		Name string `json:"name"`
 	}
 
-	var user User
+	var user string
 
-	keys := r.URL.Query()
+	keys := strings.Split(r.URL.Path, "/")
 	if len(keys) < 1 {
 		log.Println("Url parameter missing")
 		return
 	} else {
-		user.Name = keys["user"][0]
-		json.NewEncoder(w).Encode(user)
+		user = keys[len(keys)-1]
+		log.Printf("Length: %d Keys: %v ", len(keys), keys)
+		json.NewEncoder(w).Encode("Hello: " + user)
 	}
 
 }
