@@ -62,6 +62,11 @@ go mod tidy
 ```
 [Since go 1.17 go get no longer supported](https://go.dev/doc/go-get-install-deprecation)
 
+### Get dependencies
+From the source directory of your project
+```go
+go get .
+```
 
 ## References
 - [go](https://go.dev/)
@@ -72,3 +77,6 @@ go mod tidy
 - [postgres example](https://golangdocs.com/golang-postgresql-example)
 - [setup environment](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-ubuntu-18-04)
 - [example http rest api server](https://dzone.com/articles/how-to-write-a-http-rest-api-server-in-go-in-minut)
+- [go rest: gin documentation](https://gin-gonic.com/docs/)
+- [go rest: gin package](https://pkg.go.dev/github.com/gin-gonic/gin)
+- [go rest: tutorial](https://go.dev/doc/tutorial/web-service-gin)

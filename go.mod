@@ -3,12 +3,12 @@ module github.com/bank
 go 1.18
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/sirupsen/logrus v1.8.1
 )
 
 require (
-	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.11.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

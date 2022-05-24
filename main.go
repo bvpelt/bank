@@ -64,6 +64,8 @@ func main() {
 	//test.DoTransactionTest(dbpool)
 	test.Server()
 
+	server.Serve()
+
 	log.Debug("Closed  Bank")
 }
 
