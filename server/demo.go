@@ -9,8 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bank/domain"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,10 +33,10 @@ func Serve() {
 	defer stop()
 
 	router := gin.Default()
-	router.GET("/albums", getAlbums)
-	router.GET("/albums/:id", getAlbumByID)
-	router.POST("/albums", postAlbums)
-	router.GET("/accounts", domain.GetAccounts)
+	router.GET("/albums", GetAlbums)
+	router.GET("/albums/:id", GetAlbumByID)
+	router.POST("/albums", PostAlbums)
+	//router.GET("/accounts", domain.GetAccounts)
 
 	//router.Run("localhost:8080")
 
@@ -74,7 +72,7 @@ func Serve() {
 }
 
 // getAlbums responds with the list of all albums as JSON.
-func getAlbums(c *gin.Context) {
+func GetAlbums(c *gin.Context) {
 	/*
 		var pathelements = strings.Split(c.Request.URL.Path, "/")
 		fmt.Printf("pathelements: %v\n", pathelements)
@@ -85,7 +83,7 @@ func getAlbums(c *gin.Context) {
 }
 
 // postAlbums adds an album from JSON received in the request body.
-func postAlbums(c *gin.Context) {
+func PostAlbums(c *gin.Context) {
 	var newAlbum album
 
 	// Call BindJSON to bind the received JSON to
@@ -113,7 +111,7 @@ func postAlbums(c *gin.Context) {
 
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
-func getAlbumByID(c *gin.Context) {
+func GetAlbumByID(c *gin.Context) {
 	id := c.Param("id")
 
 	// Loop over the list of albums, looking for
