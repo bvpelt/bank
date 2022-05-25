@@ -74,6 +74,53 @@ func GetAccountById(c *gin.Context) {
 	}
 }
 
+// postAlbums adds an album from JSON received in the request body.
+func PostAccount(c *gin.Context) {
+	var newAccount domain.Account
+
+	// Call BindJSON to bind the received JSON to
+	// newAlbum.
+	if err := c.BindJSON(&newAccount); err != nil {
+		return
+	}
+
+	if newAccount.Id == 0 {
+		log.Println("new account id is empty")
+		/*
+			var id_s = albums[len(albums)-1].ID
+			var id int
+			id, err := strconv.Atoi(id_s)
+			if err == nil {
+				newAlbum.ID = strconv.Itoa(id + 1)
+			} else {
+				c.IndentedJSON(http.StatusBadRequest, newAlbum)
+				return
+			}
+		*/
+	}
+	// Add the new account to the database.
+	newAccount.Write(Dbpool)
+	//	albums = append(albums, newAlbum)
+	c.IndentedJSON(http.StatusCreated, newAccount)
+}
+
+// get pool information
+func GetPool(c *gin.Context) {
+	stat := Dbpool.Stat()
+
+	var status domain.DbpoolStat
+	status.AcquireConns = stat.AcquiredConns()
+	status.AcquireCount = stat.AcquireCount()
+	status.AcquireDuration = stat.AcquireDuration()
+	status.ConstructingConns = stat.ConstructingConns()
+	status.EmptyAcquireCount = stat.EmptyAcquireCount()
+	status.IdleConns = stat.IdleConns()
+	status.MaxConns = stat.MaxConns()
+	status.TotalConns = stat.TotalConns()
+	c.IndentedJSON(http.StatusOK, status)
+
+}
+
 func JSONMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "application/json")
@@ -91,6 +138,8 @@ func serve() {
 	router.POST("/albums", server.PostAlbums)
 	router.GET("/accounts", GetAccounts)
 	router.GET("/accounts/:id", GetAccountById)
+	router.POST("/accounts", PostAccount)
+	router.GET("/pool", GetPool)
 	router.Use(JSONMiddleware())
 
 	//router.Run("localhost:8080")

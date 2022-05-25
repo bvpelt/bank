@@ -50,7 +50,43 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO testuser;
 ```
 create tables using [sql/initialize.sql](sql/initialize.sql) script
 
+# Examples
 
+## Get all accounts
+```bash
+curl http://localhost:8080/accounts
+[
+    {
+        "id": 461,
+        "number": "eenenvijftif",
+        "description": "test insert"
+    },
+    {
+        "id": 460,
+        "number": "19",
+        "description": "account: 2022-05-07T20:26:36.50394469+02:00"
+    }
+]    
+```
+
+## Get a specific account
+```bash
+curl http://localhost:8080/accounts/451
+{
+    "id": 451,
+    "number": "10",
+    "description": "account: 2022-05-07T20:26:36.353751091+02:00"
+}```
+
+## Create a new account
+```bash
+$ curl -X POST http://localhost:8080/accounts -d '{"number": "eenenvijftif", "description": "test insert"}'
+{
+    "id": 461,
+    "number": "eenenvijftif",
+    "description": "test insert"
+}
+```
 
 ## FAQ
 ### Howto install a module
