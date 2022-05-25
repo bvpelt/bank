@@ -9,12 +9,12 @@ import (
 )
 
 type Transaction struct {
-	id           int64
-	from_account int64
-	to_account   int64
-	target       int64
-	amount       int64
-	description  string
+	id           int64  `json:"id"`
+	from_account int64  `json:"from"`
+	to_account   int64  `json:"to"`
+	target       int64  `json:"target"`
+	amount       int64  `json:"amount"`
+	description  string `json:"description"`
 }
 
 type ITransaction interface {

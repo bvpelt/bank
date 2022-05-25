@@ -5,8 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/bank/domain"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,6 +38,7 @@ func Serve() {
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumByID)
 	router.POST("/albums", postAlbums)
+	router.GET("/accounts", domain.GetAccounts)
 
 	//router.Run("localhost:8080")
 
@@ -90,6 +94,18 @@ func postAlbums(c *gin.Context) {
 		return
 	}
 
+	if len(newAlbum.ID) == 0 {
+		log.Println("new album id is empty")
+		var id_s = albums[len(albums)-1].ID
+		var id int
+		id, err := strconv.Atoi(id_s)
+		if err == nil {
+			newAlbum.ID = strconv.Itoa(id + 1)
+		} else {
+			c.IndentedJSON(http.StatusBadRequest, newAlbum)
+			return
+		}
+	}
 	// Add the new album to the slice.
 	albums = append(albums, newAlbum)
 	c.IndentedJSON(http.StatusCreated, newAlbum)

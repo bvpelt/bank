@@ -5,13 +5,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/bank/test"
+	"github.com/bank/server"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 )
 
-var dbpool *pgxpool.Pool
+var Dbpool *pgxpool.Pool
 
 func init() {
 	//
@@ -45,24 +45,24 @@ func main() {
 
 	var err error
 
-	dbpool, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-	log.WithFields(log.Fields{"pool": dbpool}).
+	Dbpool, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	log.WithFields(log.Fields{"pool": Dbpool}).
 		Debug("Open database")
 	CheckError(err)
 
-	err = dbpool.Ping(context.Background())
+	err = Dbpool.Ping(context.Background())
 	CheckError(err)
 
 	// always close database at program exit
 	defer func() {
 		log.Debug("Close database")
-		dbpool.Close()
+		Dbpool.Close()
 	}()
 
 	log.Debug("Connected to database!")
 
 	//test.DoTransactionTest(dbpool)
-	test.Server()
+	//test.Server()
 
 	server.Serve()
 

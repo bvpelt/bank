@@ -3,15 +3,18 @@ package domain
 import (
 	"context"
 	"fmt"
+	"net/http"
 
+	"github.com/bank/main"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 )
 
 type Account struct {
-	id          int64
-	number      string
-	description string
+	id          int64  `json:"id"`
+	number      string `json:"number"`
+	description string `json:"description"`
 }
 
 type IAccount interface {
@@ -23,16 +26,15 @@ type IAccount interface {
 	SetId(id int64)
 	SetNumber(number string)
 	SetDescription(description string)
+	GetAccounts(c *gin.Context, dbpool *pgxpool.Pool)
 }
 
 func (account *Account) GetId() int64 {
 	return account.id
-
 }
 
 func (account *Account) GetNumber() string {
 	return account.number
-
 }
 
 func (account *Account) GetDescription() string {
@@ -42,6 +44,7 @@ func (account *Account) GetDescription() string {
 func (account *Account) SetId(id int64) {
 	account.id = id
 }
+
 func (account *Account) SetNumber(number string) {
 	account.number = number
 }
@@ -110,5 +113,22 @@ func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error)
 		log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
 		return accounts, err
 	}
+}
 
+// getAlbums responds with the list of all albums as JSON.
+func GetAccounts(c *gin.Context) {
+	/*
+		var pathelements = strings.Split(c.Request.URL.Path, "/")
+		fmt.Printf("pathelements: %v\n", pathelements)
+		var fragment = c.Request.URL.Fragment
+		fmt.Printf("fragment: %v\n", fragment)
+	*/
+	account := Account{}
+	var accounts []Account
+	accounts, err := account.Read(main.Dbpool, 100)
+	if err == nil {
+		c.IndentedJSON(http.StatusOK, accounts)
+	} else {
+		c.IndentedJSON(http.StatusNotFound, err)
+	}
 }

@@ -9,9 +9,9 @@ import (
 )
 
 type Target struct {
-	id          int64
-	name        string
-	description string
+	id          int64  `json:"id"`
+	name        string `json:"name"`
+	description string `json:"description"`
 }
 
 type ITarget interface {
