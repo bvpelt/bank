@@ -59,6 +59,21 @@ func GetAccounts(c *gin.Context) {
 	}
 }
 
+// getAlbums responds with the list of all albums as JSON.
+func GetAccountById(c *gin.Context) {
+	id := c.Param("id")
+
+	account := domain.Account{}
+
+	account, err := account.ReadById(Dbpool, id)
+	if err == nil {
+		//log.WithFields(log.Fields{"accounts": accounts}).Debug("Returned accounts")
+		c.IndentedJSON(http.StatusOK, account)
+	} else {
+		c.IndentedJSON(http.StatusNotFound, err.Error())
+	}
+}
+
 func JSONMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "application/json")
@@ -75,6 +90,7 @@ func serve() {
 	router.GET("/albums/:id", server.GetAlbumByID)
 	router.POST("/albums", server.PostAlbums)
 	router.GET("/accounts", GetAccounts)
+	router.GET("/accounts/:id", GetAccountById)
 	router.Use(JSONMiddleware())
 
 	//router.Run("localhost:8080")

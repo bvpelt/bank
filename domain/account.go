@@ -129,30 +129,17 @@ func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error)
 	}
 }
 
-func (account *Account) ReadById(dbpool *pgxpool.Pool, id int64) (Account, error) {
+func (account *Account) ReadById(dbpool *pgxpool.Pool, id string) (Account, error) {
 	var acc Account
-	log.Debug("Read account")
+	log.Debug("Read account by id")
 
-	rows, err := dbpool.Query(context.Background(), "SELECT * from account where id = $1", id)
-	log.WithFields(log.Fields{"error": err}).Debug("Read account - after query")
+	rows := dbpool.QueryRow(context.Background(), "SELECT * from account where id = $1", id)
+	log.Debug("Read account by id - after query")
 
+	err := rows.Scan(&acc.Id, &acc.Number, &acc.Description)
+	log.WithFields(log.Fields{"error": err, "account": account}).Debug("Read account - reading result after scan error")
 	if err == nil {
-		var index = 0
-
-		for rows.Next() {
-			log.WithFields(log.Fields{"index": index}).Debug("Read account - reading result")
-
-			err := rows.Scan(&acc.Id, &acc.Number, &acc.Description)
-			log.WithFields(log.Fields{"error": err, "account": account}).Debug("Read account - reading result after scan error")
-			if err == nil {
-				return acc, err
-			} else {
-				log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
-				return acc, err
-			}
-		}
-		return acc, nil
-
+		return acc, err
 	} else {
 		log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
 		return acc, err
