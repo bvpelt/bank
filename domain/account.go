@@ -86,7 +86,7 @@ func (account *Account) Write(dbpool *pgxpool.Pool) (int64, error) {
 func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error) {
 	accounts := []Account{}
 
-	log.WithFields(log.Fields{"limit": limit}).Debug("Read account")
+	//log.WithFields(log.Fields{"limit": limit}).Debug("Read account")
 
 	var query string = "SELECT * from account order by id desc"
 
@@ -102,17 +102,17 @@ func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error)
 	}
 
 	//rows, err = dbpool.Query(context.Background(), "SELECT * from account order by id limit $1", limit)
-	log.WithFields(log.Fields{"error": err}).Debug("Read account - after query")
+	//log.WithFields(log.Fields{"error": err}).Debug("Read account - after query")
 
 	if err == nil {
 		var index = 0
 
 		for rows.Next() {
-			log.WithFields(log.Fields{"index": index}).Debug("Read account - reading result")
+			//log.WithFields(log.Fields{"index": index}).Debug("Read account - reading result")
 
 			account := Account{}
 			err := rows.Scan(&account.Id, &account.Number, &account.Description)
-			log.WithFields(log.Fields{"error": err, "account": account}).Debug("Read account - reading result after scan error")
+			//log.WithFields(log.Fields{"error": err, "account": account}).Debug("Read account - reading result after scan error")
 			if err == nil {
 				accounts = append(accounts, account)
 				index++
@@ -122,7 +122,6 @@ func (account *Account) Read(dbpool *pgxpool.Pool, limit int) ([]Account, error)
 			}
 		}
 		return accounts, nil
-
 	} else {
 		log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
 		return accounts, err
@@ -144,4 +143,34 @@ func (account *Account) ReadById(dbpool *pgxpool.Pool, id string) (Account, erro
 		log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
 		return acc, err
 	}
+}
+
+func (account *Account) ReadByNumber(dbpool *pgxpool.Pool, number string) ([]Account, error) {
+	accounts := []Account{}
+	log.Debug("Read account by number")
+
+	rows, err := dbpool.Query(context.Background(), "SELECT * from account where number = $1 order by number", number)
+	log.Debug("Read account by id - after query")
+
+	if err == nil {
+		var index = 0
+
+		for rows.Next() {
+			account := Account{}
+			err := rows.Scan(&account.Id, &account.Number, &account.Description)
+
+			if err == nil {
+				accounts = append(accounts, account)
+				index++
+			} else {
+				log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
+				return accounts, err
+			}
+		}
+		return accounts, nil
+	} else {
+		log.WithFields(log.Fields{"error": err}).Debug("Read account - reading result error")
+		return accounts, err
+	}
+
 }

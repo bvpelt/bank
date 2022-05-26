@@ -27,12 +27,10 @@ type ITarget interface {
 
 func (target *Target) GetId() int64 {
 	return target.id
-
 }
 
 func (target *Target) GetName() string {
 	return target.name
-
 }
 
 func (target *Target) GetDescription() string {
