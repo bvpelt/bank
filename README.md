@@ -116,3 +116,4 @@ go get .
 - [go rest: gin documentation](https://gin-gonic.com/docs/)
 - [go rest: gin package](https://pkg.go.dev/github.com/gin-gonic/gin)
 - [go rest: tutorial](https://go.dev/doc/tutorial/web-service-gin)
+- [gin routing](https://programmer.group/gin-framework-series-02-routing-and-parameters.html)
