@@ -68,8 +68,17 @@ func GetTargets(c *gin.Context) {
 // Get Target by Id
 func GetTargetById(c *gin.Context) {
 	id := c.Param("id")
+	key := `"target: ` + id + `"`
+	c.Header("ETag", key)
+
+	ifnonematch := c.Request.Header.Get("If-None-Match")
 
 	target := domain.Target{}
+
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
 
 	target, err := target.ReadById(util.Dbpool, id)
 	if err != nil {

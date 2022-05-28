@@ -67,8 +67,17 @@ func GetAccounts(c *gin.Context) {
 // Get Account by Id
 func GetAccountById(c *gin.Context) {
 	id := c.Param("id")
+	key := `"account: ` + id + `"`
+	c.Header("ETag", key)
+
+	ifnonematch := c.Request.Header.Get("If-None-Match")
 
 	account := domain.Account{}
+
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
 
 	account, err := account.ReadById(util.Dbpool, id)
 	if err != nil {

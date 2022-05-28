@@ -68,8 +68,16 @@ func GetTransactions(c *gin.Context) {
 // Get transaction by Id
 func GetTransactionById(c *gin.Context) {
 	id := c.Param("id")
+	key := `"transaction: ` + id + `"`
+	c.Header("ETag", key)
+
+	ifnonematch := c.Request.Header.Get("If-None-Match")
 
 	transaction := domain.Transaction{}
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
 
 	transaction, err := transaction.ReadById(util.Dbpool, id)
 	if err != nil {
