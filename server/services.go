@@ -36,12 +36,24 @@ func JSONMiddleware() gin.HandlerFunc {
 func StartServer() *http.Server {
 
 	router := gin.Default()
+	router.DELETE("/accounts/:id", DeleteAccountById)
 	router.GET("/accounts", GetAccounts)
 	router.GET("/accounts/:id", GetAccountById)
-	router.PUT("/accounts/:id", PutAccountById)
-	router.DELETE("/accounts/:id", DeleteAccountById)
-	router.GET("/accounts/number/:number", GetAccountByNumber)
 	router.POST("/accounts", PostAccount)
+	router.PUT("/accounts/:id", PutAccountById)
+
+	router.DELETE("/targets/:id", DeleteTargetById)
+	router.GET("/targets", GetTargets)
+	router.GET("/targets/:id", GetTargetById)
+	router.POST("/targets", PostTarget)
+	router.PUT("/targets/:id", PutTargetById)
+
+	router.DELETE("/transactions/:id", DeleteTargetById)
+	router.GET("/transactions", GetTransactions)
+	router.GET("/transactions/:id", GetTransactionById)
+	router.POST("/transactions", PostTransaction)
+	router.PUT("/transactions/:id", PutTransactionById)
+
 	router.GET("/pool", GetPool)
 	router.Use(JSONMiddleware())
 

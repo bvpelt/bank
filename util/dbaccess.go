@@ -34,7 +34,7 @@ func Dbaccess() (*pgxpool.Pool, error) {
 	}
 
 	log.Info("Connected to database!")
-	return Dbpool, nil
+	return Dbpool, err
 }
 
 func CheckError(msg string, err error) {

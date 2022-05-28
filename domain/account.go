@@ -16,10 +16,9 @@ type Account struct {
 }
 
 type IAccount interface {
-	DeleteById(dbpool *pgxpool.Pool, id string)
+	DeleteById(dbpool *pgxpool.Pool, id string) error
 	Read(dbpool *pgxpool.Pool, number string, limit int64) ([]Account, error)
 	ReadById(dbpool *pgxpool.Pool) (Account, error)
-	ReadByNumber(dbpool *pgxpool.Pool, number string) ([]Account, error)
 	Update(dbpool *pgxpool.Pool) (int64, error)
 	Write(dbpool *pgxpool.Pool) (int64, error)
 	GetDescription() string
@@ -32,11 +31,18 @@ type IAccount interface {
 }
 
 func (account *Account) DeleteById(dbpool *pgxpool.Pool, id string) error {
+	var acc Account
+	var err error
 
-	log.Debug("Delete account by id")
+	// check if account exists
+	rows := dbpool.QueryRow(context.Background(), "SELECT * from account where id = $1", id)
 
-	_, err := dbpool.Exec(context.Background(), "DELETE from account where id = $1", id)
-	log.WithFields(log.Fields{"error": err}).Trace("Delete account")
+	err = rows.Scan(&acc.Id, &acc.Number, &acc.Description)
+
+	if err == nil {
+		_, err = dbpool.Exec(context.Background(), "DELETE from account where id = $1", id)
+		log.WithFields(log.Fields{"error": err}).Trace("Delete account")
+	}
 	return err
 }
 
@@ -60,7 +66,6 @@ func (account *Account) Read(dbpool *pgxpool.Pool, number string, limit int64) (
 		rows, err = dbpool.Query(context.Background(), query, limit)
 	} else {
 		rows, err = dbpool.Query(context.Background(), query)
-
 	}
 
 	if err == nil {
@@ -80,7 +85,9 @@ func (account *Account) Read(dbpool *pgxpool.Pool, number string, limit int64) (
 		}
 		return accounts, nil
 	} else {
-		log.WithFields(log.Fields{"error": err}).Error("Read account - reading result error")
+		if err.Error() != "no rows in result set" { // nothing found functional error
+			log.WithFields(log.Fields{"error": err}).Error("Read account - reading result error")
+		}
 		return accounts, err
 	}
 }
@@ -91,7 +98,7 @@ func (account *Account) ReadById(dbpool *pgxpool.Pool, id string) (Account, erro
 	rows := dbpool.QueryRow(context.Background(), "SELECT * from account where id = $1", id)
 
 	err := rows.Scan(&acc.Id, &acc.Number, &acc.Description)
-	log.WithFields(log.Fields{"error": err, "account": account}).Trace("Read account - reading result after scan error")
+	log.WithFields(log.Fields{"error": err, "account": acc}).Trace("Read account - reading result after scan error")
 
 	if err == nil {
 		return acc, err
@@ -103,52 +110,22 @@ func (account *Account) ReadById(dbpool *pgxpool.Pool, id string) (Account, erro
 	}
 }
 
-func (account *Account) ReadByNumber(dbpool *pgxpool.Pool, number string) ([]Account, error) {
-	accounts := []Account{}
-
-	rows, err := dbpool.Query(context.Background(), "SELECT * from account where number = $1 order by number", number)
-
-	if err == nil {
-		var index = 0
-
-		for rows.Next() {
-			account := Account{}
-			err := rows.Scan(&account.Id, &account.Number, &account.Description)
-
-			if err == nil {
-				accounts = append(accounts, account)
-				index++
-			} else {
-				log.WithFields(log.Fields{"error": err}).Error("Read account - reading result error")
-				return accounts, err
-			}
-		}
-		return accounts, nil
-	} else {
-		if err.Error() != "no rows in result set" { // wrong number, functional error
-			log.WithFields(log.Fields{"number": number, "error": err}).Error("Read account - reading result error")
-		}
-		return accounts, err
-	}
-}
-
 func (account *Account) Update(dbpool *pgxpool.Pool) (int64, error) {
-
 	var err error
 	var lastInsertedId int64 = 0
 
 	if account.Id != 0 {
-		_, err = dbpool.Exec(context.Background(), "UPDATE account set number = $2, description = $3 where id = $1", account.Id, account.Number, account.Description)
+		_, err = dbpool.Exec(context.Background(), "UPDATE account set number = '$2', description = '$3' where id = $1", account.Id, account.Number, account.Description)
 		lastInsertedId = account.Id
 	} else {
-		return lastInsertedId, fmt.Errorf("Identification for account is missing")
+		return lastInsertedId, fmt.Errorf("identification for account is missing")
 	}
 
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "account": account}).Error("addAccount: Error during insert account")
-		return 0, fmt.Errorf("addAccount insert: %v", err)
+		log.WithFields(log.Fields{"error": err, "account": account}).Error("update account: Error during update account")
+		return 0, fmt.Errorf("update Account insert: %v", err)
 	} else {
-		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Trace("addAccount: insert account")
+		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Trace("update account: update account")
 	}
 
 	return lastInsertedId, nil

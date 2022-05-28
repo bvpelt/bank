@@ -11,15 +11,15 @@ import (
 )
 
 // Delete Accounts by Id
-func DeleteAccountById(c *gin.Context) {
+func DeleteTargetById(c *gin.Context) {
 	var err error
 	id := c.Param("id")
 
-	account := domain.Account{}
+	target := domain.Target{}
 
-	err = account.DeleteById(util.Dbpool, id)
+	err = target.DeleteById(util.Dbpool, id)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Account not deleted.")
+		var serverError domain.ServerError = domain.GenerateServerError("Target not deleted.")
 		if err.Error() != "no rows in result set" {
 			log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		}
@@ -30,19 +30,20 @@ func DeleteAccountById(c *gin.Context) {
 	c.IndentedJSON(http.StatusNoContent, nil)
 }
 
-// Get all accounts
-func GetAccounts(c *gin.Context) {
+// Get all targets
+func GetTargets(c *gin.Context) {
 
-	var accounts []domain.Account
+	var targets []domain.Target
 	var err error
 	var ilimit int64
 
-	account := domain.Account{}
+	target := domain.Target{}
 
-	number := c.DefaultQuery("number", "")
+	name := c.DefaultQuery("name", "")
 	limit := c.DefaultQuery("limit", "0")
 
 	ilimit, err = strconv.ParseInt(limit, 10, 64)
+
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Invalid parameter limit.")
 
@@ -51,28 +52,28 @@ func GetAccounts(c *gin.Context) {
 		return
 	}
 
-	accounts, err = account.Read(util.Dbpool, number, ilimit)
+	targets, err = target.Read(util.Dbpool, name, ilimit)
 
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Accounts not found.")
+		var serverError domain.ServerError = domain.GenerateServerError("Targets not found.")
 
 		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		c.IndentedJSON(http.StatusNotFound, serverError)
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, accounts)
+	c.IndentedJSON(http.StatusOK, targets)
 }
 
-// Get Account by Id
-func GetAccountById(c *gin.Context) {
+// Get Target by Id
+func GetTargetById(c *gin.Context) {
 	id := c.Param("id")
 
-	account := domain.Account{}
+	target := domain.Target{}
 
-	account, err := account.ReadById(util.Dbpool, id)
+	target, err := target.ReadById(util.Dbpool, id)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Account not found.")
+		var serverError domain.ServerError = domain.GenerateServerError("Target not found.")
 		if err.Error() != "no rows in result set" { // Wrong id, does not exist
 			log.WithFields(log.Fields{"id": id, "error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		}
@@ -80,15 +81,15 @@ func GetAccountById(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, account)
+	c.IndentedJSON(http.StatusOK, target)
 }
 
-// Create new account
-func PostAccount(c *gin.Context) {
-	var newAccount domain.Account
+// Create new target
+func PostTarget(c *gin.Context) {
+	var newTarget domain.Target
 
-	// Call BindJSON to bind the received JSON to newAccount.
-	if err := c.BindJSON(&newAccount); err != nil {
+	// Call BindJSON to bind the received JSON to newTarget.
+	if err := c.BindJSON(&newTarget); err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Error in json.")
 
 		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
@@ -96,33 +97,33 @@ func PostAccount(c *gin.Context) {
 		return
 	}
 
-	if newAccount.Id == 0 {
-		log.WithFields(log.Fields{"newacount": newAccount}).Debug("New account")
+	if newTarget.Id == 0 {
+		log.WithFields(log.Fields{"newtarget": newTarget}).Debug("New target")
 	}
 
-	// Add the account to the database.
-	_, err := newAccount.Write(util.Dbpool)
+	// Add the target to the database.
+	_, err := newTarget.Write(util.Dbpool)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Newaccount not saved.")
+		var serverError domain.ServerError = domain.GenerateServerError("Newtarget not saved.")
 
 		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		c.IndentedJSON(http.StatusInternalServerError, serverError)
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, newAccount)
+	c.IndentedJSON(http.StatusOK, newTarget)
 }
 
-// Update existing account
+// Update existing target
 // See https://restfulapi.net/http-methods/
-// Put only updates an existing account
+// Put only updates an existing target
 //
-func PutAccountById(c *gin.Context) {
+func PutTargetById(c *gin.Context) {
 	id := c.Param("id")
-	var newAccount domain.Account
+	var newTarget domain.Target
 
-	// Call BindJSON to bind the received JSON to newAccount.
-	if err := c.BindJSON(&newAccount); err != nil {
+	// Call BindJSON to bind the received JSON to newTarget.
+	if err := c.BindJSON(&newTarget); err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Error in json.")
 
 		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
@@ -130,22 +131,22 @@ func PutAccountById(c *gin.Context) {
 		return
 	}
 
-	if strconv.FormatInt(newAccount.Id, 10) != id {
-		var serverError domain.ServerError = domain.GenerateServerError("Invalid identification of account, no modification.")
+	if strconv.FormatInt(newTarget.Id, 10) != id {
+		var serverError domain.ServerError = domain.GenerateServerError("Invalid identification of target, no modification.")
 		log.WithFields(log.Fields{"clientcode": serverError.Ticket}).Error(serverError.Message)
 		c.IndentedJSON(http.StatusNotFound, serverError)
 		return
 	}
 
-	// Update account in the database.
-	_, err := newAccount.Update(util.Dbpool)
+	// Update target in the database.
+	_, err := newTarget.Update(util.Dbpool)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Account not updated.")
+		var serverError domain.ServerError = domain.GenerateServerError("Target not updated.")
 
 		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		c.IndentedJSON(http.StatusUnprocessableEntity, serverError)
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, newAccount)
+	c.IndentedJSON(http.StatusOK, newTarget)
 }
