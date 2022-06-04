@@ -19,7 +19,7 @@ func DeleteTargetById(c *gin.Context) {
 
 	err = target.DeleteById(util.Dbpool, id)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Target not deleted.")
+		var serverError domain.ServerError = domain.GenerateServerError("Target not found, not deleted.")
 		if err.Error() != "no rows in result set" {
 			log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		}
@@ -37,13 +37,12 @@ func GetTargets(c *gin.Context) {
 	var err error
 	var ilimit int64
 
-	target := domain.Target{}
-
 	name := c.DefaultQuery("name", "")
 	limit := c.DefaultQuery("limit", "0")
 
-	ilimit, err = strconv.ParseInt(limit, 10, 64)
+	target := domain.Target{}
 
+	ilimit, err = strconv.ParseInt(limit, 10, 64)
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Invalid parameter limit.")
 
@@ -52,8 +51,8 @@ func GetTargets(c *gin.Context) {
 		return
 	}
 
+	// retrieve known targets
 	targets, err = target.Read(util.Dbpool, name, ilimit)
-
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Targets not found.")
 
@@ -62,24 +61,40 @@ func GetTargets(c *gin.Context) {
 		return
 	}
 
+	// convert targets to json
+	targetstring, err := util.StrucToJsonString(targets)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting targets to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(targetstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, targets)
 }
 
 // Get Target by Id
 func GetTargetById(c *gin.Context) {
 	id := c.Param("id")
-	key := `"target: ` + id + `"`
-	c.Header("ETag", key)
-
-	ifnonematch := c.Request.Header.Get("If-None-Match")
 
 	target := domain.Target{}
 
-	if ifnonematch == key {
-		c.IndentedJSON(http.StatusNotModified, nil)
-		return
-	}
-
+	// retrieve known target
 	target, err := target.ReadById(util.Dbpool, id)
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Target not found.")
@@ -90,6 +105,30 @@ func GetTargetById(c *gin.Context) {
 		return
 	}
 
+	// convert target to json
+	targetstring, err := util.StrucToJsonString(target)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting target to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(targetstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, target)
 }
 

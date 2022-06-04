@@ -19,7 +19,7 @@ func DeleteAccountById(c *gin.Context) {
 
 	err = account.DeleteById(util.Dbpool, id)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Account not deleted.")
+		var serverError domain.ServerError = domain.GenerateServerError("Account not found, not deleted.")
 		if err.Error() != "no rows in result set" {
 			log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		}
@@ -37,10 +37,10 @@ func GetAccounts(c *gin.Context) {
 	var err error
 	var ilimit int64
 
-	account := domain.Account{}
-
 	number := c.DefaultQuery("number", "")
 	limit := c.DefaultQuery("limit", "0")
+
+	account := domain.Account{}
 
 	ilimit, err = strconv.ParseInt(limit, 10, 64)
 	if err != nil {
@@ -51,8 +51,8 @@ func GetAccounts(c *gin.Context) {
 		return
 	}
 
+	// retrieve known accounts
 	accounts, err = account.Read(util.Dbpool, number, ilimit)
-
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Accounts not found.")
 
@@ -61,24 +61,40 @@ func GetAccounts(c *gin.Context) {
 		return
 	}
 
+	// convert accounts to json
+	accountstring, err := util.StrucToJsonString(accounts)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting accounts to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(accountstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, accounts)
 }
 
 // Get Account by Id
 func GetAccountById(c *gin.Context) {
 	id := c.Param("id")
-	key := `"account: ` + id + `"`
-	c.Header("ETag", key)
-
-	ifnonematch := c.Request.Header.Get("If-None-Match")
 
 	account := domain.Account{}
 
-	if ifnonematch == key {
-		c.IndentedJSON(http.StatusNotModified, nil)
-		return
-	}
-
+	// retrieve known account
 	account, err := account.ReadById(util.Dbpool, id)
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Account not found.")
@@ -89,6 +105,35 @@ func GetAccountById(c *gin.Context) {
 		return
 	}
 
+	// convert account to json
+	accountstring, err := util.StrucToJsonString(account)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting account to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(accountstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, account)
 }
 

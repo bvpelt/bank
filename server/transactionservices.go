@@ -19,7 +19,7 @@ func DeleteTransactionById(c *gin.Context) {
 
 	err = transaction.DeleteById(util.Dbpool, id)
 	if err != nil {
-		var serverError domain.ServerError = domain.GenerateServerError("Transaction not deleted.")
+		var serverError domain.ServerError = domain.GenerateServerError("Transaction not found, not deleted.")
 		if err.Error() != "no rows in result set" {
 			log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
 		}
@@ -37,11 +37,11 @@ func GetTransactions(c *gin.Context) {
 	var err error
 	var ilimit int64
 
-	transaction := domain.Transaction{}
-
 	from_account := c.DefaultQuery("from", "")
 	to_account := c.DefaultQuery("to", "")
 	limit := c.DefaultQuery("limit", "0")
+
+	transaction := domain.Transaction{}
 
 	ilimit, err = strconv.ParseInt(limit, 10, 64)
 	if err != nil {
@@ -52,8 +52,8 @@ func GetTransactions(c *gin.Context) {
 		return
 	}
 
+	// retrieve known transactions
 	transactions, err = transaction.Read(util.Dbpool, from_account, to_account, ilimit)
-
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Transaction not found.")
 
@@ -62,23 +62,40 @@ func GetTransactions(c *gin.Context) {
 		return
 	}
 
+	// convert accounts to json
+	transactionstring, err := util.StrucToJsonString(transactions)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting transactions to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(transactionstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, transactions)
 }
 
 // Get transaction by Id
 func GetTransactionById(c *gin.Context) {
 	id := c.Param("id")
-	key := `"transaction: ` + id + `"`
-	c.Header("ETag", key)
-
-	ifnonematch := c.Request.Header.Get("If-None-Match")
 
 	transaction := domain.Transaction{}
-	if ifnonematch == key {
-		c.IndentedJSON(http.StatusNotModified, nil)
-		return
-	}
 
+	// retrieve known account
 	transaction, err := transaction.ReadById(util.Dbpool, id)
 	if err != nil {
 		var serverError domain.ServerError = domain.GenerateServerError("Transaction not found.")
@@ -89,6 +106,30 @@ func GetTransactionById(c *gin.Context) {
 		return
 	}
 
+	// convert account to json
+	transactionstring, err := util.StrucToJsonString(transaction)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting account to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(transactionstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, transaction)
 }
 

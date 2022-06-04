@@ -2,14 +2,16 @@ create table target (
     id bigserial,
     name text not null,
     description text,
-    primary key (id)
+    primary key (id),
+    unique (name)
 );
 
 create table account (
     id bigserial,
     number text not null,
     description text,
-    primary key (id)
+    primary key (id),
+    unique (number)
 );
 
 create table transaction (
