@@ -83,6 +83,7 @@ func GetAccounts(c *gin.Context) {
 	}
 
 	// return new value
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
 	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, accounts)
