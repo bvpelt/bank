@@ -13,6 +13,7 @@ import (
 // Delete Accounts by Id
 func DeleteAccountById(c *gin.Context) {
 	var err error
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	id := c.Param("id")
 
 	account := domain.Account{}
@@ -37,6 +38,7 @@ func GetAccounts(c *gin.Context) {
 	var err error
 	var ilimit int64
 
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	number := c.DefaultQuery("number", "")
 	limit := c.DefaultQuery("limit", "0")
 
@@ -83,7 +85,6 @@ func GetAccounts(c *gin.Context) {
 	}
 
 	// return new value
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
 	c.Header("ETag", key)
 	c.IndentedJSON(http.StatusOK, accounts)
@@ -92,6 +93,7 @@ func GetAccounts(c *gin.Context) {
 // Get Account by Id
 func GetAccountById(c *gin.Context) {
 	id := c.Param("id")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	account := domain.Account{}
 
@@ -141,6 +143,7 @@ func GetAccountById(c *gin.Context) {
 // Create new account
 func PostAccount(c *gin.Context) {
 	var newAccount domain.Account
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Call BindJSON to bind the received JSON to newAccount.
 	if err := c.BindJSON(&newAccount); err != nil {
@@ -175,6 +178,7 @@ func PostAccount(c *gin.Context) {
 func PutAccountById(c *gin.Context) {
 	id := c.Param("id")
 	var newAccount domain.Account
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Call BindJSON to bind the received JSON to newAccount.
 	if err := c.BindJSON(&newAccount); err != nil {
@@ -203,4 +207,63 @@ func PutAccountById(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, newAccount)
+}
+
+// Search all accounts
+func SearchAccounts(c *gin.Context) {
+
+	var accounts []domain.Account
+	var err error
+	var ilimit int64
+
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	search := c.Param("term")
+	limit := c.DefaultQuery("limit", "0")
+
+	account := domain.Account{}
+
+	ilimit, err = strconv.ParseInt(limit, 10, 64)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Invalid parameter limit.")
+
+		log.WithFields(log.Fields{"limit": limit, "error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusBadRequest, serverError)
+		return
+	}
+
+	// search known accounts
+	accounts, err = account.Search(util.Dbpool, search, ilimit)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Accounts not found.")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusNotFound, serverError)
+		return
+	}
+
+	// convert accounts to json
+	accountstring, err := util.StrucToJsonString(accounts)
+	if err != nil {
+		var serverError domain.ServerError = domain.GenerateServerError("Error converting accounts to json")
+
+		log.WithFields(log.Fields{"error": err, "clientcode": serverError.Ticket}).Error(serverError.Message)
+		c.IndentedJSON(http.StatusInternalServerError, serverError)
+		return
+	}
+
+	// calculate hash and check if key already known in cache
+	key := util.EtagHash(accountstring)
+	ifnonematch := c.Request.Header.Get("If-None-Match")
+	log.WithFields(log.Fields{"If-None-Match": ifnonematch}).Trace("Before etag value")
+
+	// return that value already present in client cache
+	if ifnonematch == key {
+		c.IndentedJSON(http.StatusNotModified, nil)
+		return
+	}
+
+	// return new value
+	c.Header("Cache-Control", "max-age=30,  must-revalidate") // max-age in seconds
+	c.Header("ETag", key)
+	c.IndentedJSON(http.StatusOK, accounts)
 }

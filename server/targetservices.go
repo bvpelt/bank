@@ -13,6 +13,7 @@ import (
 // Delete Accounts by Id
 func DeleteTargetById(c *gin.Context) {
 	var err error
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	id := c.Param("id")
 
 	target := domain.Target{}
@@ -37,6 +38,7 @@ func GetTargets(c *gin.Context) {
 	var err error
 	var ilimit int64
 
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	name := c.DefaultQuery("name", "")
 	limit := c.DefaultQuery("limit", "0")
 
@@ -91,6 +93,7 @@ func GetTargets(c *gin.Context) {
 // Get Target by Id
 func GetTargetById(c *gin.Context) {
 	id := c.Param("id")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	target := domain.Target{}
 
@@ -135,6 +138,7 @@ func GetTargetById(c *gin.Context) {
 // Create new target
 func PostTarget(c *gin.Context) {
 	var newTarget domain.Target
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Call BindJSON to bind the received JSON to newTarget.
 	if err := c.BindJSON(&newTarget); err != nil {
@@ -169,6 +173,7 @@ func PostTarget(c *gin.Context) {
 func PutTargetById(c *gin.Context) {
 	id := c.Param("id")
 	var newTarget domain.Target
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Call BindJSON to bind the received JSON to newTarget.
 	if err := c.BindJSON(&newTarget); err != nil {

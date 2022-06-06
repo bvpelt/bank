@@ -19,6 +19,7 @@ type IAccount interface {
 	DeleteById(dbpool *pgxpool.Pool, id string) error
 	Read(dbpool *pgxpool.Pool, number string, limit int64) ([]Account, error)
 	ReadById(dbpool *pgxpool.Pool) (Account, error)
+	Search(dbpool *pgxpool.Pool, search string, limit int64) ([]Account, error)
 	Update(dbpool *pgxpool.Pool) (int64, error)
 	Write(dbpool *pgxpool.Pool) (int64, error)
 	GetDescription() string
@@ -107,6 +108,52 @@ func (account *Account) ReadById(dbpool *pgxpool.Pool, id string) (Account, erro
 			log.WithFields(log.Fields{"id": id, "error": err}).Error("Read account - reading result error")
 		}
 		return acc, err
+	}
+}
+
+func (account *Account) Search(dbpool *pgxpool.Pool, search string, limit int64) ([]Account, error) {
+	var rows pgx.Rows
+	var err error
+	var query string = "SELECT * from account"
+	var orderby string = " order by id desc"
+	var where string = " where number like '%" + search + "%' or description like '%" + search + "%'"
+
+	accounts := []Account{}
+
+	if len(search) > 0 {
+		query = query + where
+	}
+
+	query = query + orderby
+
+	if limit > 0 {
+		query = query + " limit $1"
+		rows, err = dbpool.Query(context.Background(), query, limit)
+	} else {
+		rows, err = dbpool.Query(context.Background(), query)
+	}
+
+	if err == nil {
+		var index = 0
+
+		for rows.Next() {
+			account := Account{}
+			err := rows.Scan(&account.Id, &account.Number, &account.Description)
+
+			if err == nil {
+				accounts = append(accounts, account)
+				index++
+			} else {
+				log.WithFields(log.Fields{"error": err}).Error("Search account - reading result error")
+				return accounts, err
+			}
+		}
+		return accounts, nil
+	} else {
+		if err.Error() != "no rows in result set" { // nothing found functional error
+			log.WithFields(log.Fields{"error": err}).Error("Search account - reading result error")
+		}
+		return accounts, err
 	}
 }
 

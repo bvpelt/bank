@@ -6,6 +6,7 @@ import (
 	"github.com/bank/domain"
 	"github.com/bank/util"
 	"github.com/gin-gonic/gin"
+	"github.com/thinkerou/favicon"
 )
 
 // get pool information
@@ -41,6 +42,7 @@ func StartServer() *http.Server {
 	router.GET("/accounts/:id", GetAccountById)
 	router.POST("/accounts", PostAccount)
 	router.PUT("/accounts/:id", PutAccountById)
+	router.GET("/accounts/search/:term", SearchAccounts)
 
 	router.DELETE("/targets/:id", DeleteTargetById)
 	router.GET("/targets", GetTargets)
@@ -56,6 +58,7 @@ func StartServer() *http.Server {
 
 	router.GET("/pool", GetPool)
 	router.Use(JSONMiddleware())
+	router.Use(favicon.New("./resources/favicon.ico")) // set favicon middleware
 
 	srv := &http.Server{
 		Addr:    ":8080",

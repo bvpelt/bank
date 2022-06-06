@@ -14,6 +14,7 @@ import (
 func DeleteTransactionById(c *gin.Context) {
 	var err error
 	id := c.Param("id")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	transaction := domain.Transaction{}
 
@@ -36,6 +37,8 @@ func GetTransactions(c *gin.Context) {
 	var transactions []domain.Transaction
 	var err error
 	var ilimit int64
+
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	from_account := c.DefaultQuery("from", "")
 	to_account := c.DefaultQuery("to", "")
@@ -92,6 +95,7 @@ func GetTransactions(c *gin.Context) {
 // Get transaction by Id
 func GetTransactionById(c *gin.Context) {
 	id := c.Param("id")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	transaction := domain.Transaction{}
 
@@ -136,6 +140,7 @@ func GetTransactionById(c *gin.Context) {
 // Create new transaction
 func PostTransaction(c *gin.Context) {
 	var newTransaction domain.Transaction
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Call BindJSON to bind the received JSON to newTransaction.
 	if err := c.BindJSON(&newTransaction); err != nil {
@@ -170,6 +175,7 @@ func PostTransaction(c *gin.Context) {
 func PutTransactionById(c *gin.Context) {
 	id := c.Param("id")
 	var newTransaction domain.Transaction
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Call BindJSON to bind the received JSON to newAccount.
 	if err := c.BindJSON(&newTransaction); err != nil {
