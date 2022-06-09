@@ -189,6 +189,7 @@ func PutAccountById(c *gin.Context) {
 		return
 	}
 
+	log.WithFields(log.Fields{"param id": id, "account": newAccount}).Info("Put request input")
 	if strconv.FormatInt(newAccount.Id, 10) != id {
 		var serverError domain.ServerError = domain.GenerateServerError("Invalid identification of account, no modification.")
 		log.WithFields(log.Fields{"clientcode": serverError.Ticket}).Error(serverError.Message)
@@ -206,6 +207,7 @@ func PutAccountById(c *gin.Context) {
 		return
 	}
 
+	c.Header("ETag", "")
 	c.IndentedJSON(http.StatusOK, newAccount)
 }
 

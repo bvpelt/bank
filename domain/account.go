@@ -161,17 +161,23 @@ func (account *Account) Update(dbpool *pgxpool.Pool) (int64, error) {
 	var err error
 	var lastInsertedId int64 = 0
 
-	if account.Id != 0 {
-		_, err = dbpool.Exec(context.Background(), "UPDATE account set number = '$2', description = '$3' where id = $1", account.Id, account.Number, account.Description)
-		lastInsertedId = account.Id
-	} else {
+	log.WithFields(log.Fields{"id": account.Id, "number": account.Number, "description": account.Description, "account": account}).Info("Update account - parameters")
+
+	if account.Id == 0 {
+		log.WithFields(log.Fields{"id": account.Id, "number": account.Number, "description": account.Description, "account": account}).Error("Update account - no id specified")
 		return lastInsertedId, fmt.Errorf("identification for account is missing")
 	}
+
+	//updateStmt := `update "account" set "number"=$2, "description"=$3 where "id"=$1`
+	//_, err := dbpool.Exec(context.Background(), updateStmt, account.Id, account.Number, account.Description)
+
+	_, err = dbpool.Exec(context.Background(), `update "account" set "number"=$2, "description"=$3 where "id"=$1`, account.Id, account.Number, account.Description)
 
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "account": account}).Error("update account: Error during update account")
 		return 0, fmt.Errorf("update Account insert: %v", err)
 	} else {
+		lastInsertedId = account.Id
 		log.WithFields(log.Fields{"lastInsertedId": lastInsertedId}).Trace("update account: update account")
 	}
 

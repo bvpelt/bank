@@ -2,9 +2,11 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/bank/domain"
 	"github.com/bank/util"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/thinkerou/favicon"
 )
@@ -27,12 +29,30 @@ func GetPool(c *gin.Context) {
 }
 
 // use contenttype application/json for all services
-func JSONMiddleware() gin.HandlerFunc {
+func jsonMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "application/json")
 		c.Next()
 	}
 }
+
+/*
+func enableCors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "application/json")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, ETag")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		//c.Next()
+	}
+}
+*/
 
 func StartServer() *http.Server {
 
@@ -57,7 +77,21 @@ func StartServer() *http.Server {
 	router.PUT("/transactions/:id", PutTransactionById)
 
 	router.GET("/pool", GetPool)
-	router.Use(JSONMiddleware())
+	router.Use(jsonMiddleware())
+	//router.Use(enableCors())
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "DELETE", "POST", "PUT"},
+		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With", "ETag"},
+		ExposeHeaders:    []string{"Content-Length", "ETag"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "http://localhost:4200"
+		},
+		MaxAge: 12 * time.Hour,
+	}))
+
 	router.Use(favicon.New("./resources/favicon.ico")) // set favicon middleware
 
 	srv := &http.Server{
